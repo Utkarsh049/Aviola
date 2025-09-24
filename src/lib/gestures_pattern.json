@@ -1,0 +1,1210 @@
+{
+  "gestures": [
+    {
+      "gesture_id": "PEACE",
+      "asl": "peace",
+      "isl": "shanti",
+      "meaning": "tranquility",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "OK",
+      "asl": "okay",
+      "isl": "theek hai",
+      "meaning": "agreement",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [4, 8],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "FIST",
+      "asl": "fist",
+      "isl": "mukka",
+      "meaning": "closed hand",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "OPEN",
+      "asl": "open",
+      "isl": "khula",
+      "meaning": "unclosed",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "HAPPY",
+      "asl": "happy",
+      "isl": "khush",
+      "meaning": "joy",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "distance",
+          "landmarks": [4, 8],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.1
+        }
+      ]
+    },
+    {
+      "gesture_id": "THANK_YOU",
+      "asl": "thank you",
+      "isl": "dhanyawad",
+      "meaning": "gratitude",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "distance",
+          "landmarks": [4, 0],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.15
+        }
+      ]
+    },
+    {
+      "gesture_id": "YES",
+      "asl": "yes",
+      "isl": "haan",
+      "meaning": "affirmation",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "NO",
+      "asl": "no",
+      "isl": "nahi",
+      "meaning": "negation",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "PLEASE",
+      "asl": "please",
+      "isl": "kripya",
+      "meaning": "polite request",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [16, 14],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [20, 18],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.15
+        }
+      ]
+    },
+    {
+      "gesture_id": "SORRY",
+      "asl": "sorry",
+      "isl": "maaf kijiye",
+      "meaning": "apology",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        }
+      ]
+    },
+    {
+      "gesture_id": "GOOD",
+      "asl": "good",
+      "isl": "achha",
+      "meaning": "positive",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "BAD",
+      "asl": "bad",
+      "isl": "bura",
+      "meaning": "negative",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 3],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "BIG",
+      "asl": "big",
+      "isl": "bada",
+      "meaning": "large size",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "x",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 12],
+          "axis": "x",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "SMALL",
+      "asl": "small",
+      "isl": "chota",
+      "meaning": "small size",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "x",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 12],
+          "axis": "x",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "HOT",
+      "asl": "hot",
+      "isl": "garam",
+      "meaning": "high temperature",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 4],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.1
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "COLD",
+      "asl": "cold",
+      "isl": "thanda",
+      "meaning": "low temperature",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 4],
+          "axis": "xy",
+          "operator": ">",
+          "threshold": 0.2
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "HUNGRY",
+      "asl": "hungry",
+      "isl": "bhookha",
+      "meaning": "need food",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 0],
+          "axis": "y",
+          "operator": "<",
+          "threshold": 0.3
+        }
+      ]
+    },
+    {
+      "gesture_id": "THIRSTY",
+      "asl": "thirsty",
+      "isl": "pyaasa",
+      "meaning": "need water",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 0],
+          "axis": "y",
+          "operator": "<",
+          "threshold": 0.2
+        }
+      ]
+    },
+    {
+      "gesture_id": "TIRED",
+      "asl": "tired",
+      "isl": "thaka hua",
+      "meaning": "need rest",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 0],
+          "axis": "y",
+          "operator": "<",
+          "threshold": 0.15
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "SAD",
+      "asl": "sad",
+      "isl": "udaas",
+      "meaning": "sorrow",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 6],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "ANGRY",
+      "asl": "angry",
+      "isl": "gussa",
+      "meaning": "anger",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 4],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "LOVE",
+      "asl": "love",
+      "isl": "pyaar",
+      "meaning": "affection",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "distance",
+          "landmarks": [4, 20],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.1
+        }
+      ]
+    },
+    {
+      "gesture_id": "FAMILY",
+      "asl": "family",
+      "isl": "parivaar",
+      "meaning": "relatives",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        },
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.15
+        }
+      ]
+    },
+    {
+      "gesture_id": "FRIEND",
+      "asl": "friend",
+      "isl": "dost",
+      "meaning": "companion",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "distance",
+          "landmarks": [4, 20],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        }
+      ]
+    },
+    {
+      "gesture_id": "HOME",
+      "asl": "home",
+      "isl": "ghar",
+      "meaning": "residence",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "SCHOOL",
+      "asl": "school",
+      "isl": "school",
+      "meaning": "educational institution",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 5],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.25
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "WORK",
+      "asl": "work",
+      "isl": "kaam",
+      "meaning": "job/employment",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [4, 8],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "MONEY",
+      "asl": "money",
+      "isl": "paise",
+      "meaning": "currency",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 20],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "FOOD",
+      "asl": "food",
+      "isl": "khana",
+      "meaning": "nourishment",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "distance",
+          "landmarks": [4, 20],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.1
+        }
+      ]
+    },
+    {
+      "gesture_id": "WATER",
+      "asl": "water",
+      "isl": "paani",
+      "meaning": "liquid",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 20],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "TIME",
+      "asl": "time",
+      "isl": "samay",
+      "meaning": "duration",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "TODAY",
+      "asl": "today",
+      "isl": "aaj",
+      "meaning": "this day",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 5],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.25
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "TOMORROW",
+      "asl": "tomorrow",
+      "isl": "kal",
+      "meaning": "next day",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 17],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "YESTERDAY",
+      "asl": "yesterday",
+      "isl": "kal",
+      "meaning": "previous day",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 5],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.2
+        },
+        {
+          "type": "comparison",
+          "landmarks": [8, 12],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "NOW",
+      "asl": "now",
+      "isl": "abhi",
+      "meaning": "at this moment",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [4, 8],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "LATER",
+      "asl": "later",
+      "isl": "baad mein",
+      "meaning": "afterwards",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [4, 8],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 10],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "HERE",
+      "asl": "here",
+      "isl": "yahan",
+      "meaning": "this place",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 20],
+          "axis": "y",
+          "operator": "<"
+        }
+      ]
+    },
+    {
+      "gesture_id": "THERE",
+      "asl": "there",
+      "isl": "wahan",
+      "meaning": "that place",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        },
+        {
+          "type": "comparison",
+          "landmarks": [4, 20],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "LEFT",
+      "asl": "left",
+      "isl": "baayein",
+      "meaning": "direction left",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [4, 8],
+          "axis": "x",
+          "operator": "<"
+        },
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "gesture_id": "ME",
+      "asl": "me",
+      "isl": "mujhe",
+      "meaning": "myself",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [0, 8],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        }
+      ]
+    },
+    {
+      "gesture_id": "YOU",
+      "asl": "you",
+      "isl": "aap",
+      "meaning": "yourself",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [0, 8],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "distance",
+          "landmarks": [8, 12],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.05
+        }
+      ]
+    },
+    {
+      "gesture_id": "HE",
+      "asl": "he",
+      "isl": "woh",
+      "meaning": "male person",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 0],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 0],
+          "axis": "y",
+          "operator": ">"
+        },
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "gesture_id": "SHE",
+      "asl": "she",
+      "isl": "woh",
+      "meaning": "female person",
+      "landmark_conditions": [
+        {
+          "type": "comparison",
+          "landmarks": [8, 0],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "comparison",
+          "landmarks": [12, 0],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "gesture_id": "WE",
+      "asl": "we",
+      "isl": "hum",
+      "meaning": "us",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 9],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.15
+        },
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "gesture_id": "THEY",
+      "asl": "they",
+      "isl": "woh log",
+      "meaning": "them",
+      "landmark_conditions": [
+        {
+          "type": "distance",
+          "landmarks": [0, 17],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.15
+        },
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        }
+      ]
+    },
+    {
+      "gesture_id": "WHAT",
+      "asl": "what",
+      "isl": "kya",
+      "meaning": "question word",
+      "landmark_conditions": [
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        },
+        { "type": "palm_facing_camera", "operator": true }
+      ]
+    },
+    {
+      "gesture_id": "WHERE",
+      "asl": "where",
+      "isl": "kahan",
+      "meaning": "location question",
+      "landmark_conditions": [
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        },
+        { "type": "hand_raised", "operator": true }
+      ]
+    },
+    {
+      "gesture_id": "WHEN",
+      "asl": "when",
+      "isl": "kab",
+      "meaning": "time question",
+      "landmark_conditions": [
+        {
+          "type": "index_finger_extended",
+          "landmarks": [8],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "other_fingers_down",
+          "landmarks": [12, 16, 20],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "WHY",
+      "asl": "why",
+      "isl": "kyun",
+      "meaning": "reason question",
+      "landmark_conditions": [
+        {
+          "type": "all_fingers_extended",
+          "landmarks": [8, 12, 16, 20],
+          "axis": "y"
+        },
+        { "type": "hand_moving_head_tap", "operator": true }
+      ]
+    },
+    {
+      "gesture_id": "HOW",
+      "asl": "how",
+      "isl": "kaise",
+      "meaning": "method question",
+      "landmark_conditions": [
+        {
+          "type": "both_hands_touching",
+          "landmarks": [4, 8, 12, 16, 20],
+          "axis": "xy",
+          "operator": "<",
+          "threshold": 0.1
+        }
+      ]
+    },
+    {
+      "gesture_id": "WHO",
+      "asl": "who",
+      "isl": "kaun",
+      "meaning": "person question",
+      "landmark_conditions": [
+        {
+          "type": "index_finger_up",
+          "landmarks": [8],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "other_fingers_down",
+          "landmarks": [12, 16, 20],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    },
+    {
+      "gesture_id": "WHICH",
+      "asl": "which",
+      "isl": "kaunsa",
+      "meaning": "choice question",
+      "landmark_conditions": [
+        {
+          "type": "index_finger_up",
+          "landmarks": [8],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "middle_finger_up",
+          "landmarks": [12],
+          "axis": "y",
+          "operator": "<"
+        },
+        {
+          "type": "ring_pinky_down",
+          "landmarks": [16, 20],
+          "axis": "y",
+          "operator": ">"
+        }
+      ]
+    }
+  ]
+}
+
+

@@ -5,7 +5,6 @@ import {
   VideoOff,
   Mic,
   MicOff,
-  Phone,
   PhoneOff,
   Copy,
   Users,
@@ -13,8 +12,12 @@ import {
   MessageCircle,
   Send,
   X,
+  Hand,
+  Brain,
+  Trash2,
 } from "lucide-react";
 import { useWebRTC } from "../hooks/useWebRTC";
+import { useSignLanguageDetection } from "../hooks/useSignLanguageDetection";
 import { ChatMessage } from "../types/chat";
 
 interface VideoCallProps {}
@@ -33,12 +36,12 @@ const VideoCall: React.FC<VideoCallProps> = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [isSignLanguageEnabled, setIsSignLanguageEnabled] = useState(false);
 
   const {
     localStream,
     remoteStreams,
     connectionState,
-    isConnected,
     participantCount,
     toggleVideo,
     toggleAudio,
@@ -47,6 +50,18 @@ const VideoCall: React.FC<VideoCallProps> = () => {
     retryConnection,
     connectionError,
   } = useWebRTC(roomId!);
+
+  // Sign language detection hook
+  const {
+    detectedWords,
+    currentGesture,
+    error: signLanguageError,
+    startDetection,
+    stopDetection,
+    clearWords,
+    generateSentence,
+    isGenerating,
+  } = useSignLanguageDetection(localVideoRef.current);
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -61,12 +76,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
     }
   }, [remoteStreams]);
 
-  useEffect(() => {
-    // Listen for incoming chat messages
-    const handleChatMessage = (message: ChatMessage) => {
-      setMessages((prev) => [...prev, message]);
-    };
-  }, []);
+  // Note: Chat message handling is done through the useWebRTC hook
 
   useEffect(() => {
     const timer = setTimeout(() => setShowControls(false), 3000);
@@ -108,6 +118,34 @@ const VideoCall: React.FC<VideoCallProps> = () => {
       setMessages((prev) => [...prev, message]);
       sendChatMessage(newMessage.trim());
       setNewMessage("");
+    }
+  };
+
+  const handleSignLanguageToggle = () => {
+    if (isSignLanguageEnabled) {
+      stopDetection();
+      setIsSignLanguageEnabled(false);
+    } else {
+      startDetection();
+      setIsSignLanguageEnabled(true);
+    }
+  };
+
+  const handleGenerateAndSendSentence = async () => {
+    if (detectedWords.length === 0) return;
+
+    const sentence = await generateSentence();
+    if (sentence && sendChatMessage) {
+      const message: ChatMessage = {
+        id: Date.now().toString(),
+        text: sentence,
+        sender: "AI Translation",
+        timestamp: new Date(),
+        isOwn: true,
+      };
+      setMessages((prev) => [...prev, message]);
+      sendChatMessage(sentence);
+      clearWords();
     }
   };
 
@@ -161,10 +199,12 @@ const VideoCall: React.FC<VideoCallProps> = () => {
 
       {/* Additional Remote Videos (Picture in Picture) */}
       {remoteStreams.length > 1 && (
-        <div className={`absolute top-60 w-64 space-y-2 transition-all duration-300 ${
-          isChatOpen ? "right-84" : "right-4"
-        }`}>
-          {remoteStreams.slice(1).map((stream, index) => (
+        <div
+          className={`absolute top-60 w-64 space-y-2 transition-all duration-300 ${
+            isChatOpen ? "right-84" : "right-4"
+          }`}
+        >
+          {remoteStreams.slice(1).map((stream) => (
             <div
               key={stream.id}
               className="w-full h-36 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20"
@@ -227,6 +267,74 @@ const VideoCall: React.FC<VideoCallProps> = () => {
             >
               <X className="w-5 h-5" />
             </button>
+          </div>
+
+          {/* Sign Language Detection Panel */}
+          <div className="p-4 border-b border-white/10 bg-gray-800/50">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-white font-medium flex items-center gap-2">
+                <Hand className="w-4 h-4" />
+                Sign Language Detection
+              </h4>
+              <button
+                onClick={handleSignLanguageToggle}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  isSignLanguageEnabled
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                }`}
+              >
+                {isSignLanguageEnabled ? "ON" : "OFF"}
+              </button>
+            </div>
+
+            {isSignLanguageEnabled && (
+              <div className="space-y-2">
+                {/* Current Gesture */}
+                {currentGesture && (
+                  <div className="text-sm text-blue-400">
+                    Current:{" "}
+                    <span className="font-medium">{currentGesture}</span>
+                  </div>
+                )}
+
+                {/* Detected Words */}
+                {detectedWords.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-300">
+                      Detected words:{" "}
+                      <span className="text-yellow-400">
+                        {detectedWords.join(", ")}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleGenerateAndSendSentence}
+                        disabled={isGenerating}
+                        className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white text-xs rounded-lg transition-colors"
+                      >
+                        <Brain className="w-3 h-3" />
+                        {isGenerating ? "Generating..." : "Generate & Send"}
+                      </button>
+                      <button
+                        onClick={clearWords}
+                        className="flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {signLanguageError && (
+                  <div className="text-xs text-red-400 bg-red-900/20 p-2 rounded">
+                    {signLanguageError}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Messages Area */}
@@ -372,6 +480,19 @@ const VideoCall: React.FC<VideoCallProps> = () => {
             ) : (
               <VideoOff className="w-6 h-6 text-white" />
             )}
+          </button>
+
+          {/* Sign Language Toggle */}
+          <button
+            onClick={handleSignLanguageToggle}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isSignLanguageEnabled
+                ? "bg-green-600/80 hover:bg-green-500/80"
+                : "bg-gray-700/80 hover:bg-gray-600/80"
+            }`}
+            title="Sign Language Detection"
+          >
+            <Hand className="w-6 h-6 text-white" />
           </button>
 
           {/* Chat Toggle */}

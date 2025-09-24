@@ -1,8 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Video, VideoOff, Mic, MicOff, Phone, PhoneOff, Copy, Users, Wifi, MessageCircle, Send, X } from 'lucide-react';
-import { useWebRTC } from '../hooks/useWebRTC';
-import { ChatMessage } from '../types/chat';
+import React, { useState, useRef, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  Phone,
+  PhoneOff,
+  Copy,
+  Users,
+  Wifi,
+  MessageCircle,
+  Send,
+  X,
+} from "lucide-react";
+import { useWebRTC } from "../hooks/useWebRTC";
+import { ChatMessage } from "../types/chat";
 
 interface VideoCallProps {}
 
@@ -11,15 +24,16 @@ const VideoCall: React.FC<VideoCallProps> = () => {
   const navigate = useNavigate();
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  
+
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  
+  const [newMessage, setNewMessage] = useState("");
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+
   const {
     localStream,
     remoteStream,
@@ -29,7 +43,9 @@ const VideoCall: React.FC<VideoCallProps> = () => {
     toggleVideo,
     toggleAudio,
     leaveCall,
-    sendChatMessage
+    sendChatMessage,
+    retryConnection,
+    connectionError,
   } = useWebRTC(roomId!);
 
   useEffect(() => {
@@ -47,7 +63,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
   useEffect(() => {
     // Listen for incoming chat messages
     const handleChatMessage = (message: ChatMessage) => {
-      setMessages(prev => [...prev, message]);
+      setMessages((prev) => [...prev, message]);
     };
   }, []);
 
@@ -68,7 +84,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
 
   const handleLeaveCall = () => {
     leaveCall();
-    navigate('/');
+    navigate("/");
   };
 
   const copyRoomId = async () => {
@@ -84,32 +100,40 @@ const VideoCall: React.FC<VideoCallProps> = () => {
       const message: ChatMessage = {
         id: Date.now().toString(),
         text: newMessage.trim(),
-        sender: 'You',
+        sender: "You",
         timestamp: new Date(),
-        isOwn: true
+        isOwn: true,
       };
-      setMessages(prev => [...prev, message]);
+      setMessages((prev) => [...prev, message]);
       sendChatMessage(newMessage.trim());
-      setNewMessage('');
+      setNewMessage("");
     }
   };
 
   const getConnectionStatusColor = () => {
     switch (connectionState) {
-      case 'connected': return 'text-green-400';
-      case 'connecting': return 'text-yellow-400';
-      case 'disconnected': return 'text-red-400';
-      default: return 'text-gray-400';
+      case "connected":
+        return "text-green-400";
+      case "connecting":
+        return "text-yellow-400";
+      case "disconnected":
+        return "text-red-400";
+      default:
+        return "text-gray-400";
     }
   };
 
   return (
-    <div 
+    <div
       className="relative min-h-screen bg-gray-900 overflow-hidden cursor-none"
       onMouseMove={() => setShowControls(true)}
     >
       {/* Remote Video (Main) */}
-      <div className={`absolute inset-0 transition-all duration-300 ${isChatOpen ? 'right-80' : 'right-0'}`}>
+      <div
+        className={`absolute inset-0 transition-all duration-300 ${
+          isChatOpen ? "right-80" : "right-0"
+        }`}
+      >
         {remoteStream ? (
           <video
             ref={remoteVideoRef}
@@ -123,15 +147,23 @@ const VideoCall: React.FC<VideoCallProps> = () => {
               <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Users className="w-12 h-12 text-gray-400" />
               </div>
-              <p className="text-white text-xl mb-2">Waiting for participant...</p>
-              <p className="text-gray-400">Share the room ID to invite others</p>
+              <p className="text-white text-xl mb-2">
+                Waiting for participant...
+              </p>
+              <p className="text-gray-400">
+                Share the room ID to invite others
+              </p>
             </div>
           </div>
         )}
       </div>
 
       {/* Local Video (Picture in Picture) */}
-      <div className={`absolute top-4 w-64 h-48 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 transition-all duration-300 ${isChatOpen ? 'right-84' : 'right-4'}`}>
+      <div
+        className={`absolute top-4 w-64 h-48 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 transition-all duration-300 ${
+          isChatOpen ? "right-84" : "right-4"
+        }`}
+      >
         {localStream ? (
           <video
             ref={localVideoRef}
@@ -153,7 +185,11 @@ const VideoCall: React.FC<VideoCallProps> = () => {
       </div>
 
       {/* Chat Panel */}
-      <div className={`absolute top-0 right-0 h-full w-80 bg-gray-900/95 backdrop-blur-md border-l border-white/10 transform transition-transform duration-300 ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div
+        className={`absolute top-0 right-0 h-full w-80 bg-gray-900/95 backdrop-blur-md border-l border-white/10 transform transition-transform duration-300 ${
+          isChatOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <div className="flex flex-col h-full">
           {/* Chat Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
@@ -181,23 +217,27 @@ const VideoCall: React.FC<VideoCallProps> = () => {
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${
+                    message.isOwn ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
                     className={`max-w-xs px-3 py-2 rounded-lg ${
                       message.isOwn
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-white'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-700 text-white"
                     }`}
                   >
                     {!message.isOwn && (
-                      <p className="text-xs text-gray-300 mb-1">{message.sender}</p>
+                      <p className="text-xs text-gray-300 mb-1">
+                        {message.sender}
+                      </p>
                     )}
                     <p className="text-sm">{message.text}</p>
                     <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -213,7 +253,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Type a message..."
                 className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -231,26 +271,35 @@ const VideoCall: React.FC<VideoCallProps> = () => {
 
       {/* Chat Overlay for Mobile */}
       {isChatOpen && (
-        <div 
+        <div
           className="absolute inset-0 bg-black/50 lg:hidden"
           onClick={() => setIsChatOpen(false)}
         />
       )}
 
       {/* Top Bar */}
-      <div className={`absolute top-0 left-0 bg-gradient-to-b from-black/50 to-transparent p-4 transition-all duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} ${isChatOpen ? 'right-80' : 'right-0'}`}>
+      <div
+        className={`absolute top-0 left-0 bg-gradient-to-b from-black/50 to-transparent p-4 transition-all duration-300 ${
+          showControls ? "opacity-100" : "opacity-0"
+        } ${isChatOpen ? "right-80" : "right-0"}`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Wifi className={`w-5 h-5 ${getConnectionStatusColor()}`} />
-              <span className="text-white font-medium capitalize">{connectionState}</span>
+              <span className="text-white font-medium capitalize">
+                {connectionState}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-white" />
-              <span className="text-white">{participantCount} participant{participantCount !== 1 ? 's' : ''}</span>
+              <span className="text-white">
+                {participantCount} participant
+                {participantCount !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
-          
+
           <button
             onClick={copyRoomId}
             className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all duration-300"
@@ -263,15 +312,19 @@ const VideoCall: React.FC<VideoCallProps> = () => {
       </div>
 
       {/* Bottom Controls */}
-      <div className={`absolute bottom-0 left-0 bg-gradient-to-t from-black/50 to-transparent p-6 transition-all duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} ${isChatOpen ? 'right-80' : 'right-0'}`}>
+      <div
+        className={`absolute bottom-0 left-0 bg-gradient-to-t from-black/50 to-transparent p-6 transition-all duration-300 ${
+          showControls ? "opacity-100" : "opacity-0"
+        } ${isChatOpen ? "right-80" : "right-0"}`}
+      >
         <div className="flex items-center justify-center gap-4">
           {/* Audio Toggle */}
           <button
             onClick={handleAudioToggle}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isAudioEnabled 
-                ? 'bg-gray-700/80 hover:bg-gray-600/80' 
-                : 'bg-red-600/80 hover:bg-red-500/80'
+              isAudioEnabled
+                ? "bg-gray-700/80 hover:bg-gray-600/80"
+                : "bg-red-600/80 hover:bg-red-500/80"
             }`}
           >
             {isAudioEnabled ? (
@@ -285,9 +338,9 @@ const VideoCall: React.FC<VideoCallProps> = () => {
           <button
             onClick={handleVideoToggle}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isVideoEnabled 
-                ? 'bg-gray-700/80 hover:bg-gray-600/80' 
-                : 'bg-red-600/80 hover:bg-red-500/80'
+              isVideoEnabled
+                ? "bg-gray-700/80 hover:bg-gray-600/80"
+                : "bg-red-600/80 hover:bg-red-500/80"
             }`}
           >
             {isVideoEnabled ? (
@@ -301,12 +354,25 @@ const VideoCall: React.FC<VideoCallProps> = () => {
           <button
             onClick={() => setIsChatOpen(!isChatOpen)}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isChatOpen 
-                ? 'bg-blue-600/80 hover:bg-blue-500/80' 
-                : 'bg-gray-700/80 hover:bg-gray-600/80'
+              isChatOpen
+                ? "bg-blue-600/80 hover:bg-blue-500/80"
+                : "bg-gray-700/80 hover:bg-gray-600/80"
             }`}
           >
             <MessageCircle className="w-6 h-6 text-white" />
+          </button>
+
+          {/* Debug Toggle */}
+          <button
+            onClick={() => setShowDebugInfo(!showDebugInfo)}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+              showDebugInfo
+                ? "bg-yellow-600/80 hover:bg-yellow-500/80"
+                : "bg-gray-700/80 hover:bg-gray-600/80"
+            }`}
+            title="Debug Info"
+          >
+            <span className="text-white font-mono text-xs">DBG</span>
           </button>
 
           {/* Leave Call */}
@@ -320,11 +386,69 @@ const VideoCall: React.FC<VideoCallProps> = () => {
       </div>
 
       {/* Connection Status Overlay */}
-      {connectionState === 'connecting' && (
+      {connectionState === "connecting" && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center max-w-md mx-4">
             <div className="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white text-xl">Connecting to room...</p>
+            <p className="text-white text-xl mb-4">Connecting to room...</p>
+            <p className="text-gray-300 text-sm">Room ID: {roomId}</p>
+            <p className="text-gray-400 text-xs mt-2">
+              Make sure both devices are on the same network
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Error Overlay */}
+      {connectionError && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-red-900/20 backdrop-blur-md rounded-2xl p-8 text-center max-w-md mx-4 border border-red-500/30">
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Wifi className="w-6 h-6 text-red-400" />
+            </div>
+            <p className="text-white text-xl mb-2">Connection Failed</p>
+            <p className="text-red-300 text-sm mb-4">{connectionError}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={retryConnection}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Retry Connection
+              </button>
+              <button
+                onClick={handleLeaveCall}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Leave Room
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Info Panel */}
+      {showDebugInfo && (
+        <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-xs font-mono max-w-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold">Debug Info</h3>
+            <button
+              onClick={() => setShowDebugInfo(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="space-y-1">
+            <div>Room ID: {roomId}</div>
+            <div>Connection: {connectionState}</div>
+            <div>Participants: {participantCount}</div>
+            <div>Local Stream: {localStream ? "✓" : "✗"}</div>
+            <div>Remote Stream: {remoteStream ? "✓" : "✗"}</div>
+            <div>Video Enabled: {isVideoEnabled ? "✓" : "✗"}</div>
+            <div>Audio Enabled: {isAudioEnabled ? "✓" : "✗"}</div>
+            {connectionError && (
+              <div className="text-red-400 mt-2">Error: {connectionError}</div>
+            )}
           </div>
         </div>
       )}

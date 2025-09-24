@@ -1,7 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+// This file is no longer needed for local-only operation
+// Supabase has been replaced with BroadcastChannel for local signaling
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
-
-// Create client with fallback values to prevent initialization errors
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Keep this file to prevent import errors, but it's not used
+export const supabase = null;

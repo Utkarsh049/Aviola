@@ -74,94 +74,108 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
       return stream;
     } catch (error) {
       console.error("Error accessing media devices:", error);
-      setConnectionError("Failed to access camera/microphone. Please check permissions.");
+      setConnectionError(
+        "Failed to access camera/microphone. Please check permissions."
+      );
       setConnectionState("disconnected");
       return null;
     }
   }, []);
 
   // Create peer connection for a specific peer
-  const createPeerConnection = useCallback((peerId: string) => {
-    console.log(`Creating peer connection for ${peerId}`);
-    const peerConnection = new RTCPeerConnection(iceServers);
+  const createPeerConnection = useCallback(
+    (peerId: string) => {
+      console.log(`Creating peer connection for ${peerId}`);
+      const peerConnection = new RTCPeerConnection(iceServers);
 
-    // Add local stream tracks
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        peerConnection.addTrack(track, localStreamRef.current!);
-      });
-    }
-
-    // Handle ICE candidates
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: "ice-candidate",
-          candidate: event.candidate,
-          targetId: peerId,
-          senderId: clientIdRef.current,
-          roomId,
-        }));
+      // Add local stream tracks
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, localStreamRef.current!);
+        });
       }
-    };
 
-    // Handle remote stream
-    peerConnection.ontrack = (event) => {
-      console.log(`Received remote track from ${peerId}`);
-      const [stream] = event.streams;
-      
-      setRemoteStreams(prev => {
-        const filtered = prev.filter(s => s.id !== stream.id);
-        return [...filtered, stream];
-      });
+      // Handle ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "ice-candidate",
+              candidate: event.candidate,
+              targetId: peerId,
+              senderId: clientIdRef.current,
+              roomId,
+            })
+          );
+        }
+      };
 
-      // Update peer connection with stream
-      const peerConn = peerConnectionsRef.current.get(peerId);
-      if (peerConn) {
-        peerConn.stream = stream;
-        peerConnectionsRef.current.set(peerId, peerConn);
-      }
-    };
+      // Handle remote stream
+      peerConnection.ontrack = (event) => {
+        console.log(`Received remote track from ${peerId}`);
+        const [stream] = event.streams;
 
-    // Handle connection state changes
-    peerConnection.onconnectionstatechange = () => {
-      const state = peerConnection.connectionState;
-      console.log(`Peer ${peerId} connection state: ${state}`);
-      
-      if (state === "connected") {
-        setConnectionState("connected");
-        setIsConnected(true);
-        setConnectionError(null);
-        reconnectAttemptsRef.current = 0;
-      } else if (state === "disconnected" || state === "failed") {
-        // Remove this peer's stream
+        setRemoteStreams((prev) => {
+          const filtered = prev.filter((s) => s.id !== stream.id);
+          return [...filtered, stream];
+        });
+
+        // Update peer connection with stream
         const peerConn = peerConnectionsRef.current.get(peerId);
-        if (peerConn?.stream) {
-          setRemoteStreams(prev => prev.filter(s => s.id !== peerConn.stream!.id));
+        if (peerConn) {
+          peerConn.stream = stream;
+          peerConnectionsRef.current.set(peerId, peerConn);
         }
-        
-        // Remove peer connection
-        peerConnectionsRef.current.delete(peerId);
-        
-        // Update participant count
-        setParticipantCount(peerConnectionsRef.current.size + 1);
-        
-        if (peerConnectionsRef.current.size === 0) {
-          setConnectionState("disconnected");
-          setIsConnected(false);
-        }
-      }
-    };
+      };
 
-    return peerConnection;
-  }, [roomId]);
+      // Handle connection state changes
+      peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection.connectionState;
+        console.log(`Peer ${peerId} connection state: ${state}`);
+
+        if (state === "connected") {
+          setConnectionState("connected");
+          setIsConnected(true);
+          setConnectionError(null);
+          reconnectAttemptsRef.current = 0;
+        } else if (state === "disconnected" || state === "failed") {
+          // Remove this peer's stream
+          const peerConn = peerConnectionsRef.current.get(peerId);
+          if (peerConn?.stream) {
+            setRemoteStreams((prev) =>
+              prev.filter((s) => s.id !== peerConn.stream!.id)
+            );
+          }
+
+          // Remove peer connection
+          peerConnectionsRef.current.delete(peerId);
+
+          // Update participant count
+          setParticipantCount(peerConnectionsRef.current.size + 1);
+
+          // Check if we still have any active connections
+          const hasActiveConnections = Array.from(
+            peerConnectionsRef.current.values()
+          ).some((conn) => conn.connection.connectionState === "connected");
+
+          if (!hasActiveConnections && peerConnectionsRef.current.size === 0) {
+            setConnectionState("disconnected");
+            setIsConnected(false);
+          }
+        }
+      };
+
+      return peerConnection;
+    },
+    [roomId]
+  );
 
   // Setup WebSocket signaling server (simple local server)
   const setupSignaling = useCallback(() => {
     // For local development, we'll use a simple WebSocket server
     // In production, you'd want to use a proper signaling server
-    const wsUrl = `ws://localhost:8080/room/${roomId}`;
-    
+    const wsUrl = `ws://localhost:8080`;
+
     try {
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -170,13 +184,15 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
         console.log("WebSocket connected");
         setConnectionError(null);
         reconnectAttemptsRef.current = 0;
-        
+
         // Join room
-        ws.send(JSON.stringify({
-          type: "join-room",
-          roomId,
-          clientId: clientIdRef.current,
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "join-room",
+            roomId,
+            clientId: clientIdRef.current,
+          })
+        );
       };
 
       ws.onmessage = async (event) => {
@@ -193,24 +209,29 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
             if (data.clientId !== clientIdRef.current) {
               console.log(`New participant joined: ${data.clientId}`);
               setParticipantCount(data.participantCount || 1);
-              
-              // Create offer for new participant
-              const peerConnection = createPeerConnection(data.clientId);
-              peerConnectionsRef.current.set(data.clientId, {
-                id: data.clientId,
-                connection: peerConnection,
-              });
 
-              const offer = await peerConnection.createOffer();
-              await peerConnection.setLocalDescription(offer);
-              
-              ws.send(JSON.stringify({
-                type: "offer",
-                offer,
-                targetId: data.clientId,
-                senderId: clientIdRef.current,
-                roomId,
-              }));
+              // Only create connection if we don't already have one for this peer
+              if (!peerConnectionsRef.current.has(data.clientId)) {
+                // Create offer for new participant
+                const peerConnection = createPeerConnection(data.clientId);
+                peerConnectionsRef.current.set(data.clientId, {
+                  id: data.clientId,
+                  connection: peerConnection,
+                });
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                ws.send(
+                  JSON.stringify({
+                    type: "offer",
+                    offer,
+                    targetId: data.clientId,
+                    senderId: clientIdRef.current,
+                    roomId,
+                  })
+                );
+              }
             }
             break;
 
@@ -220,7 +241,9 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
             if (peerConn) {
               peerConn.connection.close();
               if (peerConn.stream) {
-                setRemoteStreams(prev => prev.filter(s => s.id !== peerConn.stream!.id));
+                setRemoteStreams((prev) =>
+                  prev.filter((s) => s.id !== peerConn.stream!.id)
+                );
               }
               peerConnectionsRef.current.delete(data.clientId);
             }
@@ -230,23 +253,29 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
           case "offer":
             if (data.targetId === clientIdRef.current) {
               console.log(`Received offer from ${data.senderId}`);
-              const peerConnection = createPeerConnection(data.senderId);
-              peerConnectionsRef.current.set(data.senderId, {
-                id: data.senderId,
-                connection: peerConnection,
-              });
 
-              await peerConnection.setRemoteDescription(data.offer);
-              const answer = await peerConnection.createAnswer();
-              await peerConnection.setLocalDescription(answer);
+              // Only create connection if we don't already have one for this peer
+              if (!peerConnectionsRef.current.has(data.senderId)) {
+                const peerConnection = createPeerConnection(data.senderId);
+                peerConnectionsRef.current.set(data.senderId, {
+                  id: data.senderId,
+                  connection: peerConnection,
+                });
 
-              ws.send(JSON.stringify({
-                type: "answer",
-                answer,
-                targetId: data.senderId,
-                senderId: clientIdRef.current,
-                roomId,
-              }));
+                await peerConnection.setRemoteDescription(data.offer);
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                ws.send(
+                  JSON.stringify({
+                    type: "answer",
+                    answer,
+                    targetId: data.senderId,
+                    senderId: clientIdRef.current,
+                    roomId,
+                  })
+                );
+              }
             }
             break;
 
@@ -265,13 +294,18 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
               console.log(`Received ICE candidate from ${data.senderId}`);
               const peerConn = peerConnectionsRef.current.get(data.senderId);
               if (peerConn && data.candidate) {
-                await peerConn.connection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                await peerConn.connection.addIceCandidate(
+                  new RTCIceCandidate(data.candidate)
+                );
               }
             }
             break;
 
           case "chat-message":
-            if (data.senderId !== clientIdRef.current && chatCallbackRef.current) {
+            if (
+              data.senderId !== clientIdRef.current &&
+              chatCallbackRef.current
+            ) {
               const message: ChatMessage = {
                 id: data.messageId,
                 text: data.message,
@@ -294,29 +328,36 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
         console.log("WebSocket disconnected");
         setConnectionState("disconnected");
         setIsConnected(false);
-        
+
         // Attempt to reconnect
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
-          console.log(`Reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
+          console.log(
+            `Reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`
+          );
           setTimeout(() => {
             if (wsRef.current?.readyState !== WebSocket.OPEN) {
               setupSignaling();
             }
           }, 2000 * reconnectAttemptsRef.current);
         } else {
-          setConnectionError("Connection lost. Please refresh the page to reconnect.");
+          setConnectionError(
+            "Connection lost. Please refresh the page to reconnect."
+          );
         }
       };
 
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
-        setConnectionError("Failed to connect to signaling server. Make sure the server is running on localhost:8080");
+        setConnectionError(
+          "Failed to connect to signaling server. Make sure the server is running on localhost:8080"
+        );
       };
-
     } catch (error) {
       console.error("Failed to setup WebSocket:", error);
-      setConnectionError("Failed to setup connection. Using fallback BroadcastChannel for same-device connections.");
+      setConnectionError(
+        "Failed to setup connection. Using fallback BroadcastChannel for same-device connections."
+      );
       setupBroadcastChannelFallback();
     }
   }, [roomId, createPeerConnection]);
@@ -325,13 +366,13 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
   const setupBroadcastChannelFallback = useCallback(() => {
     console.log("Setting up BroadcastChannel fallback");
     const channel = new BroadcastChannel(`room-${roomId}`);
-    
+
     channel.onmessage = async (event) => {
       const data = event.data;
       if (data.senderId === clientIdRef.current) return;
-      
+
       console.log("BroadcastChannel message:", data.type);
-      
+
       // Handle similar to WebSocket messages but for same-device only
       switch (data.type) {
         case "join-room":
@@ -342,7 +383,7 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
             senderId: clientIdRef.current,
           });
           break;
-          
+
         case "participant-joined":
           if (!peerConnectionsRef.current.has(data.clientId)) {
             const peerConnection = createPeerConnection(data.clientId);
@@ -353,7 +394,7 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
 
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
-            
+
             channel.postMessage({
               type: "offer",
               offer,
@@ -362,11 +403,11 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
             });
           }
           break;
-          
+
         // Handle other message types similar to WebSocket
       }
     };
-    
+
     // Announce presence
     channel.postMessage({
       type: "join-room",
@@ -399,14 +440,16 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
   const sendChatMessage = useCallback(
     (message: string) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: "chat-message",
-          message,
-          messageId: Date.now().toString(),
-          senderId: clientIdRef.current,
-          timestamp: new Date().toISOString(),
-          roomId,
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: "chat-message",
+            message,
+            messageId: Date.now().toString(),
+            senderId: clientIdRef.current,
+            timestamp: new Date().toISOString(),
+            roomId,
+          })
+        );
       }
     },
     [roomId]

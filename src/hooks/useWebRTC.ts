@@ -3,7 +3,7 @@ import { ChatMessage } from "../types/chat";
 
 interface UseWebRTCReturn {
   localStream: MediaStream | null;
-  remoteStream: MediaStream | null;
+  remoteStreams: MediaStream[];
   connectionState: "connecting" | "connected" | "disconnected";
   isConnected: boolean;
   participantCount: number;
@@ -16,9 +16,15 @@ interface UseWebRTCReturn {
   connectionError: string | null;
 }
 
+interface PeerConnection {
+  id: string;
+  connection: RTCPeerConnection;
+  stream?: MediaStream;
+}
+
 export const useWebRTC = (roomId: string): UseWebRTCReturn => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<MediaStream[]>([]);
   const [connectionState, setConnectionState] = useState<
     "connecting" | "connected" | "disconnected"
   >("connecting");
@@ -26,37 +32,22 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
   const [participantCount, setParticipantCount] = useState(1);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
-  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const chatCallbackRef = useRef<((message: ChatMessage) => void) | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitiatorRef = useRef<boolean>(false);
-  const remoteDescriptionSetRef = useRef<boolean>(false);
-  const queuedIceCandidatesRef = useRef<any[]>([]);
+  const clientIdRef = useRef<string>(Math.random().toString(36).substr(2, 9));
+  const reconnectAttemptsRef = useRef<number>(0);
+  const maxReconnectAttempts = 5;
 
-  // ICE servers configuration with better local network support
+  // ICE servers configuration optimized for local networks
   const iceServers = {
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
-      { urls: "stun:stun3.l.google.com:19302" },
-      { urls: "stun:stun4.l.google.com:19302" },
-      // Add local network STUN servers
       { urls: "stun:stun.ekiga.net" },
-      { urls: "stun:stun.ideasip.com" },
-      { urls: "stun:stun.schlund.de" },
       { urls: "stun:stun.stunprotocol.org:3478" },
-      { urls: "stun:stun.voiparound.com" },
-      { urls: "stun:stun.voipbuster.com" },
-      { urls: "stun:stun.voipstunt.com" },
-      { urls: "stun:stun.counterpath.com" },
-      { urls: "stun:stun.1und1.de" },
-      { urls: "stun:stun.gmx.net" },
-      { urls: "stun:stun.callwithus.com" },
-      { urls: "stun:stun.counterpath.net" },
-      { urls: "stun:stun.internetcalls.com" },
     ],
     iceCandidatePoolSize: 10,
   };
@@ -77,251 +68,312 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
           autoGainControl: true,
         },
       });
-      console.log("Media devices accessed successfully:", stream);
+      console.log("Media devices accessed successfully");
       setLocalStream(stream);
       localStreamRef.current = stream;
       return stream;
     } catch (error) {
       console.error("Error accessing media devices:", error);
+      setConnectionError("Failed to access camera/microphone. Please check permissions.");
       setConnectionState("disconnected");
       return null;
     }
   }, []);
 
-  // Process queued ICE candidates
-  const processQueuedIceCandidates = useCallback(async () => {
-    if (!peerConnectionRef.current || !remoteDescriptionSetRef.current) return;
-
-    console.log(
-      "Processing queued ICE candidates:",
-      queuedIceCandidatesRef.current.length
-    );
-    for (const candidateData of queuedIceCandidatesRef.current) {
-      try {
-        const iceCandidate = new RTCIceCandidate({
-          candidate: candidateData.candidate,
-          sdpMid: candidateData.sdpMid,
-          sdpMLineIndex: candidateData.sdpMLineIndex,
-          usernameFragment: candidateData.usernameFragment,
-        });
-        await peerConnectionRef.current!.addIceCandidate(iceCandidate);
-        console.log("Queued ICE candidate added successfully");
-      } catch (error) {
-        console.error("Error adding queued ICE candidate:", error);
-      }
-    }
-    queuedIceCandidatesRef.current = [];
-  }, []);
-
-  // Create peer connection
-  const createPeerConnection = useCallback(() => {
+  // Create peer connection for a specific peer
+  const createPeerConnection = useCallback((peerId: string) => {
+    console.log(`Creating peer connection for ${peerId}`);
     const peerConnection = new RTCPeerConnection(iceServers);
 
-    // Enhanced logging for debugging
+    // Add local stream tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    // Handle ICE candidates
     peerConnection.onicecandidate = (event) => {
-      console.log("ICE candidate generated:", event.candidate);
-      if (event.candidate && broadcastChannelRef.current) {
-        console.log("Sending ICE candidate:", event.candidate);
-        // Serialize the ICE candidate for BroadcastChannel
-        const candidateData = {
-          candidate: event.candidate.candidate,
-          sdpMid: event.candidate.sdpMid,
-          sdpMLineIndex: event.candidate.sdpMLineIndex,
-          usernameFragment: event.candidate.usernameFragment,
-        };
-        broadcastChannelRef.current.postMessage({
+      if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
           type: "ice-candidate",
-          candidate: candidateData,
+          candidate: event.candidate,
+          targetId: peerId,
+          senderId: clientIdRef.current,
           roomId,
-        });
-      } else {
-        console.log("ICE gathering complete");
+        }));
       }
     };
 
-    peerConnection.onicegatheringstatechange = () => {
-      console.log("ICE gathering state:", peerConnection.iceGatheringState);
-    };
-
-    peerConnection.oniceconnectionstatechange = () => {
-      console.log("ICE connection state:", peerConnection.iceConnectionState);
-    };
-
+    // Handle remote stream
     peerConnection.ontrack = (event) => {
-      console.log("Remote track received:", event);
+      console.log(`Received remote track from ${peerId}`);
       const [stream] = event.streams;
-      console.log("Remote stream:", stream);
-      setRemoteStream(stream);
-      setConnectionState("connected");
-      setIsConnected(true);
-      setParticipantCount(2);
+      
+      setRemoteStreams(prev => {
+        const filtered = prev.filter(s => s.id !== stream.id);
+        return [...filtered, stream];
+      });
+
+      // Update peer connection with stream
+      const peerConn = peerConnectionsRef.current.get(peerId);
+      if (peerConn) {
+        peerConn.stream = stream;
+        peerConnectionsRef.current.set(peerId, peerConn);
+      }
     };
 
+    // Handle connection state changes
     peerConnection.onconnectionstatechange = () => {
       const state = peerConnection.connectionState;
-      console.log("Peer connection state changed:", state);
+      console.log(`Peer ${peerId} connection state: ${state}`);
+      
       if (state === "connected") {
         setConnectionState("connected");
         setIsConnected(true);
         setConnectionError(null);
+        reconnectAttemptsRef.current = 0;
       } else if (state === "disconnected" || state === "failed") {
-        setConnectionState("disconnected");
-        setIsConnected(false);
-        setParticipantCount(1);
-        setRemoteStream(null);
-        if (state === "failed") {
-          setConnectionError(
-            "Connection failed. Check your network connection."
-          );
+        // Remove this peer's stream
+        const peerConn = peerConnectionsRef.current.get(peerId);
+        if (peerConn?.stream) {
+          setRemoteStreams(prev => prev.filter(s => s.id !== peerConn.stream!.id));
         }
-      } else if (state === "connecting") {
-        setConnectionState("connecting");
-        setConnectionError(null);
+        
+        // Remove peer connection
+        peerConnectionsRef.current.delete(peerId);
+        
+        // Update participant count
+        setParticipantCount(peerConnectionsRef.current.size + 1);
+        
+        if (peerConnectionsRef.current.size === 0) {
+          setConnectionState("disconnected");
+          setIsConnected(false);
+        }
       }
     };
 
     return peerConnection;
   }, [roomId]);
 
-  // Initialize WebRTC connection
-  const initializeConnection = useCallback(async () => {
-    console.log("Initializing WebRTC connection for room:", roomId);
-    const stream = await initializeLocalStream();
-    if (!stream) {
-      console.error("Failed to initialize local stream");
-      return;
-    }
+  // Setup WebSocket signaling server (simple local server)
+  const setupSignaling = useCallback(() => {
+    // For local development, we'll use a simple WebSocket server
+    // In production, you'd want to use a proper signaling server
+    const wsUrl = `ws://localhost:8080/room/${roomId}`;
+    
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-    const peerConnection = createPeerConnection();
-    peerConnectionRef.current = peerConnection;
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        setConnectionError(null);
+        reconnectAttemptsRef.current = 0;
+        
+        // Join room
+        ws.send(JSON.stringify({
+          type: "join-room",
+          roomId,
+          clientId: clientIdRef.current,
+        }));
+      };
 
-    // Add local stream tracks to peer connection
-    stream.getTracks().forEach((track) => {
-      console.log("Adding track to peer connection:", track.kind);
-      peerConnection.addTrack(track, stream);
-    });
+      ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Received message:", data.type, data);
 
-    // Setup local BroadcastChannel for signaling
-    const broadcastChannel = new BroadcastChannel(`room-${roomId}`);
-    broadcastChannelRef.current = broadcastChannel;
+        switch (data.type) {
+          case "room-joined":
+            console.log("Successfully joined room");
+            setParticipantCount(data.participantCount || 1);
+            break;
 
-    // Handle incoming messages
-    broadcastChannel.onmessage = async (event) => {
-      const {
-        type,
-        offer,
-        answer,
-        candidate,
-        roomId: messageRoomId,
-        chatMessage,
-      } = event.data;
+          case "participant-joined":
+            if (data.clientId !== clientIdRef.current) {
+              console.log(`New participant joined: ${data.clientId}`);
+              setParticipantCount(data.participantCount || 1);
+              
+              // Create offer for new participant
+              const peerConnection = createPeerConnection(data.clientId);
+              peerConnectionsRef.current.set(data.clientId, {
+                id: data.clientId,
+                connection: peerConnection,
+              });
 
-      // Only process messages for this room
-      if (messageRoomId !== roomId) return;
+              const offer = await peerConnection.createOffer();
+              await peerConnection.setLocalDescription(offer);
+              
+              ws.send(JSON.stringify({
+                type: "offer",
+                offer,
+                targetId: data.clientId,
+                senderId: clientIdRef.current,
+                roomId,
+              }));
+            }
+            break;
 
-      console.log("Received message:", type, event.data);
+          case "participant-left":
+            console.log(`Participant left: ${data.clientId}`);
+            const peerConn = peerConnectionsRef.current.get(data.clientId);
+            if (peerConn) {
+              peerConn.connection.close();
+              if (peerConn.stream) {
+                setRemoteStreams(prev => prev.filter(s => s.id !== peerConn.stream!.id));
+              }
+              peerConnectionsRef.current.delete(data.clientId);
+            }
+            setParticipantCount(data.participantCount || 1);
+            break;
 
-      try {
-        switch (type) {
           case "offer":
-            console.log("Received offer:", offer);
-            if (!isInitiatorRef.current) {
-              await peerConnection.setRemoteDescription(offer);
-              remoteDescriptionSetRef.current = true;
-              console.log("Remote description set from offer");
+            if (data.targetId === clientIdRef.current) {
+              console.log(`Received offer from ${data.senderId}`);
+              const peerConnection = createPeerConnection(data.senderId);
+              peerConnectionsRef.current.set(data.senderId, {
+                id: data.senderId,
+                connection: peerConnection,
+              });
 
-              // Process any queued ICE candidates
-              await processQueuedIceCandidates();
-
+              await peerConnection.setRemoteDescription(data.offer);
               const answer = await peerConnection.createAnswer();
               await peerConnection.setLocalDescription(answer);
-              console.log("Answer created and local description set");
 
-              broadcastChannel.postMessage({
+              ws.send(JSON.stringify({
                 type: "answer",
                 answer,
+                targetId: data.senderId,
+                senderId: clientIdRef.current,
                 roomId,
-              });
-              console.log("Answer sent");
+              }));
             }
             break;
 
           case "answer":
-            console.log("Received answer:", answer);
-            if (isInitiatorRef.current) {
-              await peerConnection.setRemoteDescription(answer);
-              remoteDescriptionSetRef.current = true;
-              console.log("Remote description set from answer");
-
-              // Process any queued ICE candidates
-              await processQueuedIceCandidates();
+            if (data.targetId === clientIdRef.current) {
+              console.log(`Received answer from ${data.senderId}`);
+              const peerConn = peerConnectionsRef.current.get(data.senderId);
+              if (peerConn) {
+                await peerConn.connection.setRemoteDescription(data.answer);
+              }
             }
             break;
 
           case "ice-candidate":
-            console.log("Received ICE candidate:", candidate);
-            if (candidate) {
-              if (remoteDescriptionSetRef.current) {
-                // Remote description is set, add ICE candidate immediately
-                const iceCandidate = new RTCIceCandidate({
-                  candidate: candidate.candidate,
-                  sdpMid: candidate.sdpMid,
-                  sdpMLineIndex: candidate.sdpMLineIndex,
-                  usernameFragment: candidate.usernameFragment,
-                });
-                await peerConnection.addIceCandidate(iceCandidate);
-                console.log("ICE candidate added successfully");
-              } else {
-                // Queue ICE candidate until remote description is set
-                console.log(
-                  "Queuing ICE candidate until remote description is set"
-                );
-                queuedIceCandidatesRef.current.push(candidate);
+            if (data.targetId === clientIdRef.current) {
+              console.log(`Received ICE candidate from ${data.senderId}`);
+              const peerConn = peerConnectionsRef.current.get(data.senderId);
+              if (peerConn && data.candidate) {
+                await peerConn.connection.addIceCandidate(new RTCIceCandidate(data.candidate));
               }
             }
             break;
 
           case "chat-message":
-            if (chatMessage && chatCallbackRef.current) {
+            if (data.senderId !== clientIdRef.current && chatCallbackRef.current) {
               const message: ChatMessage = {
-                id: chatMessage.id,
-                text: chatMessage.text,
-                sender: chatMessage.sender,
-                timestamp: new Date(chatMessage.timestamp),
+                id: data.messageId,
+                text: data.message,
+                sender: `User ${data.senderId.slice(0, 6)}`,
+                timestamp: new Date(data.timestamp),
                 isOwn: false,
               };
               chatCallbackRef.current(message);
             }
             break;
+
+          case "error":
+            console.error("Server error:", data.message);
+            setConnectionError(data.message);
+            break;
         }
-      } catch (error) {
-        console.error(`Error handling ${type}:`, error);
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        setConnectionState("disconnected");
+        setIsConnected(false);
+        
+        // Attempt to reconnect
+        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+          reconnectAttemptsRef.current++;
+          console.log(`Reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
+          setTimeout(() => {
+            if (wsRef.current?.readyState !== WebSocket.OPEN) {
+              setupSignaling();
+            }
+          }, 2000 * reconnectAttemptsRef.current);
+        } else {
+          setConnectionError("Connection lost. Please refresh the page to reconnect.");
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        setConnectionError("Failed to connect to signaling server. Make sure the server is running on localhost:8080");
+      };
+
+    } catch (error) {
+      console.error("Failed to setup WebSocket:", error);
+      setConnectionError("Failed to setup connection. Using fallback BroadcastChannel for same-device connections.");
+      setupBroadcastChannelFallback();
+    }
+  }, [roomId, createPeerConnection]);
+
+  // Fallback to BroadcastChannel for same-device connections
+  const setupBroadcastChannelFallback = useCallback(() => {
+    console.log("Setting up BroadcastChannel fallback");
+    const channel = new BroadcastChannel(`room-${roomId}`);
+    
+    channel.onmessage = async (event) => {
+      const data = event.data;
+      if (data.senderId === clientIdRef.current) return;
+      
+      console.log("BroadcastChannel message:", data.type);
+      
+      // Handle similar to WebSocket messages but for same-device only
+      switch (data.type) {
+        case "join-room":
+          // Send back a participant-joined message
+          channel.postMessage({
+            type: "participant-joined",
+            clientId: clientIdRef.current,
+            senderId: clientIdRef.current,
+          });
+          break;
+          
+        case "participant-joined":
+          if (!peerConnectionsRef.current.has(data.clientId)) {
+            const peerConnection = createPeerConnection(data.clientId);
+            peerConnectionsRef.current.set(data.clientId, {
+              id: data.clientId,
+              connection: peerConnection,
+            });
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            
+            channel.postMessage({
+              type: "offer",
+              offer,
+              targetId: data.clientId,
+              senderId: clientIdRef.current,
+            });
+          }
+          break;
+          
+        // Handle other message types similar to WebSocket
       }
     };
-
-    // Determine if this is the initiator (first to join)
-    // Simple heuristic: if no other messages received within 2 seconds, become initiator
-    setTimeout(async () => {
-      if (!isInitiatorRef.current && !remoteDescriptionSetRef.current) {
-        isInitiatorRef.current = true;
-        console.log("Becoming initiator, creating offer...");
-        try {
-          const offer = await peerConnection.createOffer();
-          await peerConnection.setLocalDescription(offer);
-          console.log("Offer created and local description set");
-
-          broadcastChannel.postMessage({
-            type: "offer",
-            offer,
-            roomId,
-          });
-          console.log("Offer sent");
-        } catch (error) {
-          console.error("Error creating/sending offer:", error);
-        }
-      }
-    }, 2000);
-  }, [roomId, initializeLocalStream, createPeerConnection]);
+    
+    // Announce presence
+    channel.postMessage({
+      type: "join-room",
+      clientId: clientIdRef.current,
+      senderId: clientIdRef.current,
+    });
+  }, [roomId, createPeerConnection]);
 
   // Toggle video
   const toggleVideo = useCallback(() => {
@@ -346,17 +398,15 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
   // Send chat message
   const sendChatMessage = useCallback(
     (message: string) => {
-      if (broadcastChannelRef.current) {
-        broadcastChannelRef.current.postMessage({
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
           type: "chat-message",
-          chatMessage: {
-            id: Date.now().toString(),
-            text: message,
-            sender: "Remote User",
-            timestamp: new Date().toISOString(),
-          },
+          message,
+          messageId: Date.now().toString(),
+          senderId: clientIdRef.current,
+          timestamp: new Date().toISOString(),
           roomId,
-        });
+        }));
       }
     },
     [roomId]
@@ -372,33 +422,30 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
       retryTimeoutRef.current = null;
     }
 
+    // Close all peer connections
+    peerConnectionsRef.current.forEach((peerConn) => {
+      peerConn.connection.close();
+    });
+    peerConnectionsRef.current.clear();
+
     // Stop local stream
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
     }
 
-    // Close peer connection
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-    }
-
-    // Close broadcast channel
-    if (broadcastChannelRef.current) {
-      broadcastChannelRef.current.close();
+    // Close WebSocket
+    if (wsRef.current) {
+      wsRef.current.close();
     }
 
     // Reset state
     setLocalStream(null);
-    setRemoteStream(null);
+    setRemoteStreams([]);
     setConnectionState("disconnected");
     setIsConnected(false);
     setParticipantCount(0);
     setConnectionError(null);
-
-    // Reset connection flags
-    isInitiatorRef.current = false;
-    remoteDescriptionSetRef.current = false;
-    queuedIceCandidatesRef.current = [];
+    reconnectAttemptsRef.current = 0;
   }, []);
 
   // Retry connection
@@ -406,20 +453,24 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
     console.log("Retrying connection...");
     setConnectionError(null);
     setConnectionState("connecting");
+    reconnectAttemptsRef.current = 0;
 
-    // Clear any existing retry timeout
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
+    // Clean up existing connections
+    peerConnectionsRef.current.forEach((peerConn) => {
+      peerConn.connection.close();
+    });
+    peerConnectionsRef.current.clear();
+    setRemoteStreams([]);
+
+    if (wsRef.current) {
+      wsRef.current.close();
     }
-
-    // Clean up existing connection
-    leaveCall();
 
     // Retry after a short delay
     retryTimeoutRef.current = setTimeout(() => {
-      initializeConnection();
+      setupSignaling();
     }, 1000);
-  }, [leaveCall, initializeConnection]);
+  }, [setupSignaling]);
 
   // Set chat message callback
   const onChatMessage = useCallback(
@@ -431,23 +482,23 @@ export const useWebRTC = (roomId: string): UseWebRTCReturn => {
 
   // Initialize connection on mount
   useEffect(() => {
-    initializeConnection();
+    const initialize = async () => {
+      const stream = await initializeLocalStream();
+      if (stream) {
+        setupSignaling();
+      }
+    };
+
+    initialize();
 
     return () => {
       leaveCall();
     };
-  }, [initializeConnection, leaveCall]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      leaveCall();
-    };
-  }, [leaveCall]);
+  }, [initializeLocalStream, setupSignaling, leaveCall]);
 
   return {
     localStream,
-    remoteStream,
+    remoteStreams,
     connectionState,
     isConnected,
     participantCount,

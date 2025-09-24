@@ -36,7 +36,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
 
   const {
     localStream,
-    remoteStream,
+    remoteStreams,
     connectionState,
     isConnected,
     participantCount,
@@ -55,10 +55,11 @@ const VideoCall: React.FC<VideoCallProps> = () => {
   }, [localStream]);
 
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
+    if (remoteVideoRef.current && remoteStreams.length > 0) {
+      // Show the first remote stream in the main video area
+      remoteVideoRef.current.srcObject = remoteStreams[0];
     }
-  }, [remoteStream]);
+  }, [remoteStreams]);
 
   useEffect(() => {
     // Listen for incoming chat messages
@@ -134,7 +135,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
           isChatOpen ? "right-80" : "right-0"
         }`}
       >
-        {remoteStream ? (
+        {remoteStreams.length > 0 ? (
           <video
             ref={remoteVideoRef}
             autoPlay
@@ -148,7 +149,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
                 <Users className="w-12 h-12 text-gray-400" />
               </div>
               <p className="text-white text-xl mb-2">
-                Waiting for participant...
+                Waiting for participants...
               </p>
               <p className="text-gray-400">
                 Share the room ID to invite others
@@ -157,6 +158,29 @@ const VideoCall: React.FC<VideoCallProps> = () => {
           </div>
         )}
       </div>
+
+      {/* Additional Remote Videos (Picture in Picture) */}
+      {remoteStreams.length > 1 && (
+        <div className={`absolute top-60 w-64 space-y-2 transition-all duration-300 ${
+          isChatOpen ? "right-84" : "right-4"
+        }`}>
+          {remoteStreams.slice(1).map((stream, index) => (
+            <div
+              key={stream.id}
+              className="w-full h-36 bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20"
+            >
+              <video
+                autoPlay
+                playsInline
+                ref={(el) => {
+                  if (el) el.srcObject = stream;
+                }}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Local Video (Picture in Picture) */}
       <div
@@ -443,7 +467,7 @@ const VideoCall: React.FC<VideoCallProps> = () => {
             <div>Connection: {connectionState}</div>
             <div>Participants: {participantCount}</div>
             <div>Local Stream: {localStream ? "✓" : "✗"}</div>
-            <div>Remote Stream: {remoteStream ? "✓" : "✗"}</div>
+            <div>Remote Streams: {remoteStreams.length}</div>
             <div>Video Enabled: {isVideoEnabled ? "✓" : "✗"}</div>
             <div>Audio Enabled: {isAudioEnabled ? "✓" : "✗"}</div>
             {connectionError && (

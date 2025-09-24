@@ -1,9 +1,9 @@
-const WebSocket = require('ws');
-const http = require('http');
+import { WebSocketServer } from 'ws';
+import http from 'http';
 
 // Create HTTP server
 const server = http.createServer();
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocketServer({ server });
 
 // Store rooms and participants
 const rooms = new Map();
@@ -12,7 +12,7 @@ function broadcastToRoom(roomId, message, excludeClient = null) {
   const room = rooms.get(roomId);
   if (room) {
     room.participants.forEach((client) => {
-      if (client !== excludeClient && client.readyState === WebSocket.OPEN) {
+      if (client !== excludeClient && client.readyState === 1) { // WebSocket.OPEN = 1
         client.send(JSON.stringify(message));
       }
     });
@@ -92,7 +92,7 @@ wss.on('connection', (ws, req) => {
           const room = rooms.get(message.roomId);
           if (room && message.targetId) {
             const targetClient = room.participants.get(message.targetId);
-            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+            if (targetClient && targetClient.readyState === 1) { // WebSocket.OPEN = 1
               targetClient.send(JSON.stringify(message));
             }
           }
